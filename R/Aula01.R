@@ -7,6 +7,15 @@
 #Link do curso
 "https://uspdigital.usp.br/apolo/apoObterCurso?cod_curso=640400020&cod_edicao=24001&numseqofeedi=1"
 
+###Conteúdo
+#'
+#'-Instalação do R e RStudio; 
+#'-Operações básicas; Instalação de pacotes; 
+#'-Importação de dados; 
+#'-Manipulação de dados e estatística descritiva.
+#'
+
+#'
 # Principais operações aritméticas e lógicas com o R --------------------------------------
 #'
 #' Operador | Descrição
@@ -90,6 +99,14 @@ log10(100)
 #'
 
 
+
+# Instalando pacotes -------------------------------------------------------------------
+
+
+# Importação e exportação de dados -----------------------------------------------------
+
+
+# Manipulação de dados e estatística descritiva -----------------------------------------------
 
 
 
