@@ -33,22 +33,22 @@ Trat
 Rep <-  4
 Rep
 
-#Croqui
-DIC <- function(Trat,Rep,semente){
-  Trat <- rep(Trat,Rep)
-  N <- length(levels(Trat))*Rep # Número total de parcelas
-  set.seed(semente)
-  Plan<-as.data.frame(
-    matrix(
-      sample(Trat,N), ncol = length(levels(Trat)), nrow=Rep
-    )
-  )
-  colnames(Plan)<-paste("Coluna", c(seq(1:length(levels(Trat)))))
-  rownames(Plan)<-paste("Linha", c(seq(1:Rep)))
-  return(Plan)
-}
-
-DIC(Trat, Rep, 12)
+# #Croqui
+# DIC.tab <- function(Trat,Rep,semente){
+#   Trat <- rep(Trat,Rep)
+#   N <- length(levels(Trat))*Rep # Número total de parcelas
+#   set.seed(semente) #Número que garante a reprodutibilidade dos resultados
+#   Plan<-as.data.frame(
+#     matrix(
+#       sample(Trat,N), ncol = length(levels(Trat)), nrow=Rep
+#     )
+#   )
+#   colnames(Plan)<-paste("Coluna", c(seq(1:length(levels(Trat)))))
+#   rownames(Plan)<-paste("Linha", c(seq(1:Rep)))
+#   return(Plan)
+# }
+# 
+# DIC.tab(3,3,1)
 
 
 
@@ -69,8 +69,11 @@ DIC.croqui<-function(trat, rep, semente){
   return(croqui)
 }
 
-DIC.croqui(2,2,13)
 
+
+
+################################
+DIC.croqui(trat=6, rep=3, semente=1)
 
 
 
