@@ -212,7 +212,7 @@ qqline(dados2$y, col = "magenta", lwd = 2)
 #'
 #'
 # Fazendo da maneira correta EX1: -----------------------------------------------------------------
-
+#'
 #'Hipóteses
 #'H0: os resíduos seguem distribuição normal;
 #'Ha: os resíduos seguem NÃO segue distribuição normal;
@@ -233,6 +233,7 @@ par(mfrow = c(2, 2))
 plot(mod1)
 par(mfrow = c(1, 1))
 
+#'
 #'Obtenção dos resíduos
 #' 
 #'Resíduos simples
@@ -244,13 +245,8 @@ res
 #'Resíduos estudentizados
 res_Stud <- rstandard(mod1)
 shapiro.test(res_Stud)
-shapiro.test(res)
 
-
-plot(res_Stud)
-
-
-
+#'
 #'Verificação da normalidade dos resíduos
 qqnorm(res_Stud, xlab="Quantis da distribuição 
        normal", ylab="Resíduos Studentizados")
