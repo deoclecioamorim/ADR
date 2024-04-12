@@ -50,46 +50,65 @@ tabela
 
 # ANOVA ---------------------------------------------------------------------------------------
 #'
-#'Usando lm()
 #'
 dados<-transform(dados, trat=as.factor(trat))
 str(dados)
 
-#'
-#'Normalidade
-#'
-#'Hipóteses
-#'H0: os resíduos seguem distribuição normal;
-#'Ha: os resíduos seguem NÃO segue distribuição normal;
+#com lm()
+mod1<-lm(y ~ trat, dados)
+anova(mod1)
+
+par(mfrow = c(2, 2))
+plot(mod1)
+par(mfrow = c(1, 1))
 #'
 #'Resíduos estudentizados
 res_Stud <- rstandard(mod1)
 shapiro.test(res_Stud)
 #'
-
-
 # Verificando homogeneidade de variâncias
 ggplot(dados, aes(x = trat, y = res_Stud)) +
   geom_dotplot(binaxis = "y", stackdir = "center", fill = "steelblue") +
   labs(x = "Variedade", y = "Resíduos Studentizados") +
   theme_minimal()
 
-# Teste de Levene para verificação da homogeneidade de variâncias
-anova(lm(abs(res) ~ trat, dados))
+library(MASS)
+boxcox(dados$y+0.01 ~ dados$trat,ylab="logaritmo da 
+       verossimilhança") #lambda=0,5.
 
-#'Ou
+#'
+#'Análise dos Dados Transformados
+dados$yt<- (y+0.01)^0.5
+modelot<- lm(yt ~ trat, dados)
 
-#library(lawstat)
-levene.test(dados$y, dados$trat, location = "mean")
+#'
+#'Checando as pressuposições
+par(mfrow = c(2, 2))
+plot(modelot)
+par(mfrow = c(1, 1))
+
+shapiro.test(rstandard(modelot))
+
+#'
+#'Tranformação Box-cox
+boxcox(modelot,ylab="logaritmo da verossimilhança")
+
+#'
+#'Análise de variância para os dados transformados
+anova(modelot)
+#'
+#'
+#'Teste médias
+Tukey <- HSD.test(modelot,"trat",alpha=0.05,console=TRUE)
+Duncan <- duncan.test(modelot,"trat",alpha=0.05,console=TRUE)
+LSD_Fisher <- LSD.test(modelot,"trat",alpha=0.05,console=TRUE)
+
+#'
+#'Apresentação das médias
+round((tapply(dados$y, dados$trat, mean)),4) 
 
 
-
-
-
-
-#com lm()
-mod1<-lm(y ~ trat, dados)
-anova(mod1)
+# Funções similares para ANOVA ----------------------------------------------------------------
 
 #com aov()
 mod2<-aov(y ~ trat, dados)
@@ -106,7 +125,7 @@ QMR<-224.8/42
 Fcal
 
 
-library(car)
+#library(car)
 Anova(mod3, test = "F")
 
 QMT<-4000.0/2
@@ -135,5 +154,8 @@ ggsave(
   height = 5,
   dpi = 300
 )
+
+
+# Linear + Platô ------------------------------------------------------------------------------
 
 
