@@ -1,13 +1,13 @@
-###############################################################################
-####### Análise de dados com o R (ADR) ########################################
-####### Deoclecio Jardim Amorim  ##############################################
-####### Eduardo Mariano          ##############################################
-###############################################################################
+#'##############################################################################
+#'###### Análise de dados com o R (ADR) ########################################
+#'###### Deoclecio Jardim Amorim  ##############################################
+#'###### Eduardo Mariano          ##############################################
+#'##############################################################################
 
 #Link do curso
 "https://uspdigital.usp.br/apolo/apoObterCurso?cod_curso=640400020&cod_edicao=24001&numseqofeedi=1"
 
-###Conteúdo
+#'##Conteúdo
 #'
 #'-Instalação do R e RStudio;
 #'-Operações básicas; Instalação de pacotes;
@@ -178,8 +178,7 @@ mean(a)
 #Tools -> Install packages
 
 #Auto instalação
-if (!require(readxl))
-  install.packages("readxl", dep = TRUE)
+if (!require(readxl))install.packages("readxl", dep = TRUE)
 
 #Carregar pacote
 library(tidyverse)
