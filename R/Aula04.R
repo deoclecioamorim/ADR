@@ -12,4 +12,9 @@
 #'-Introdução aos modelos mistos: tipos de efeito (aleatório e fixo);
 #'-Interpretação dos componentes de variância.
 #'
+# Opções de controle -----------------------------------------------------------------------------
+options(prompt = "R", continue = "+  ", width = 70, useFancyQuotes = FALSE)
+options(OutDec=".")#Separador decimal, útil para gráficos
+rm(list=ls(all=T))#Limpar memoria
+
 # Pacotes -------------------------------------------------------------------------------------

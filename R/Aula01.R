@@ -129,6 +129,8 @@ class(d)
 
 #'
 #'Formato tibble
+#'
+library(tibble)
 dados <- as.tibble(dados)
 head(dados)
 str(dados)
