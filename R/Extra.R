@@ -1,6 +1,18 @@
 
+#'Extra 1: função para cálculo do desvio padrão
 #'
-#'Extra 1: manipulação
+dvpad<-function(x){
+xbar <-sum(x)/length(x)
+sqd <- sum((x - xbar)^2)
+var<-sqd/(length(x)-1)
+ return(var) 
+}
+
+a<-c(4,4,4)
+dvpad(a)
+
+#'
+#'Extra 2: manipulação
 
 dados_mani_6 <- dados_mani_3 %>%
   group_by(trat) %>% summarise(

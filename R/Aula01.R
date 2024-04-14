@@ -58,7 +58,7 @@
 #igualdade
 3 == 4
 
-# Funções especiais ---------------------------------------------------------------------------
+# Funções matemáticas ---------------------------------------------------------------------------
 
 #Número pi= 3,14...
 pi
@@ -82,7 +82,7 @@ log(exp(1))
 #log na base 10
 log10(100)
 
-# Preciso de socorro --------------------------------------------------------------------------
+# Preciso de ajuda --------------------------------------------------------------------------
 
 ? log()
 
@@ -127,13 +127,13 @@ class(d)
 # criar um dataframe com esses vetores
 (dados <- data.frame(fisiologia, especie , d13c))
 
-#'
-#'Formato tibble
-#'
-library(tibble)
-dados <- as.tibble(dados)
-head(dados)
-str(dados)
+#' #'
+#' #'Formato tibble
+#' #'
+#' library(tibble)
+#' dados <- as_tibble(dados)
+#' head(dados)
+#' str(dados)
 
 #'-listas
 #'
@@ -141,13 +141,15 @@ lista <- list(vetor_a = a,
               matrix_d = d,
               df = dados)
 lista
-
 #'
-#'Exemplo prático com a função anova()
+#'Para acessar os objetos da lista use $ (lista$df)
+#'
+#'Exemplo prático para navegação com a função anova()
 mod1 <- lm(d13c ~ fisiologia, dados)
 anova(mod1)
 
 ff <- anova(mod1)
+ff$`F value`
 fcal <- ff$`Mean Sq` / 2
 fcal
 #'
@@ -165,6 +167,15 @@ media <- function(x) {
 media(a)
 mean(a)
 
+#'
+#'##########################################################################
+#                           EXERCÍCIO                                     #
+#'#########################################################################
+#'
+#'Como feito para a média, crie uma função para o cálculo do 
+#'desvio padrão da seguinte amostra: 4,4,4
+#'
+
 # Instalando pacotes -------------------------------------------------------------------
 #'
 #'O que é um pacote R?
@@ -180,8 +191,14 @@ mean(a)
 #Tools -> Install packages
 
 #Auto instalação
-if (!require(readxl))install.packages("readxl", dep = TRUE)
+if(!require(readxl))install.packages("readxl", dep = TRUE)
 
+#'##########################################################################
+#                           EXERCÍCIO                                     #
+#'#########################################################################
+#'
+#'Instale os pacotes: "dae", "jtools", "knitr", "kableExtra" e "plotly".
+#'
 #Carregar pacote
 library(tidyverse)
 require(readxl)
@@ -195,6 +212,9 @@ require(readxl)
 #'2) Via comando
 #'
 #'Formato .csv
+#'
+#'Classificar as células como "geral" ou "texto" e NUNCA como 
+#'númerico, para evitar a perda de casas decimais.
 #'
 dados_csv <-
   read.table("dados/dados_kozak2017.csv",
@@ -218,10 +238,10 @@ library(writexl)
 write_xlsx(dados_xlsx, "dados/dados_xlsx.xlsx")
 
 #Exportar dados no formato .csv
-write.table(dados, file = "dados/dados_kozak2017.csv", sep = ",")
+write.table(dados_xlsx, file = "dados/dados_kozak2017.csv", sep = ",")
 
 #Agora seu R tem muita coisa que tal fazer uma limpeza
-rm(list = ls(all = T))#Clear memory
+rm(list = ls(all = T))#Limpar memória
 
 # Manipulação de dados e estatística descritiva -----------------------------------------------
 
@@ -261,9 +281,13 @@ dados_mani_6 <- dados_mani_3 %>%
     SDlogY = sd(logy, na.rm = TRUE)
   )
 view(dados_mani_6)
-
-#Exercicio 1: calcular média e desvio da variável raiz_y
-#Exercicio 2: calcular erro padrão da média de todas as variáveis
+#'
+#'##########################################################################
+#                           EXERCÍCIO                                     #
+#'#########################################################################
+#'
+#A) calcular média e desvio da variável raiz_y
+#B) calcular erro padrão da média de todas as variáveis
 
 
 

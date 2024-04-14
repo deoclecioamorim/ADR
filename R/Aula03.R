@@ -253,9 +253,9 @@ ggsave(
 # Análise de regressão ----------------------------------------------------------------
 #'
 #'Suponhamos um experimento (fictício) de produção de cana-de-açurcar em que 
-#'se usaram seis doses de nitrogênio (0, 50, 100, 150 e 200 kg por hectare). 
+#'se usaram seis doses de nitrogênio (0, 50, 100, 150 e 200 kg/ha). 
 #'A variável resposta considerada aqui foi o peso dos colmos em toneladas por  
-#'hectare.
+#'hectare (tch).
 #'
 #'Dados
 tch<- c(10,	12,	11,	9,
@@ -327,20 +327,27 @@ ggplot(dados_reg, aes(dose, tch))+
 )
 
 
+#'
+#'##########################################################################
+#                           EXERCÍCIO                                     #
+#'#########################################################################
+#'
+#'Calcule a produção máxima teórica de cana-de-açúcar, com cálculos,
+#'com base no modelo quadrático acima. 
+
 #'Gráfico estilizado
 #'
 # Valores de exibição
-(p_valor <- 0.001)
-(p_valor_text <- sprintf("p-value < %.4f", p_valor))
+(p_valor_text <- expression(italic(p)-value < 0.001))
 eq <- expression(hat(y)==9.7321+0.1767*x-0.0006*x^2) #Formato latex
-r_quadrado <- expression(R^2==0.90) #Formato latex
+r_quadrado <- expression(italic(R)^2==0.90) #Formato latex
 p_max <-expression(Pmax==138.2)
-
 
 graf.reg <- ggplot(dados_reg, aes(dose, tch))+
   geom_point(color = "#39568CFF", shape=20, size=2)+
   geom_smooth(method = lm, formula = y ~ x+I(x^2), level = 0.95)+
   geom_vline(xintercept = 138.2, linetype = "dashed", color = "red")+
+  geom_hline(yintercept = 21.9, linetype = "dashed", color = "red")+
   xlab(expression(Dose~kg~ha^{-1}~de~nitrogênio))+
   ylab(expression(Produção~kg~ha^{-1}))+
   annotate("text", x = 70, y = 26, #R-quadrado
@@ -354,22 +361,6 @@ graf.reg <- ggplot(dados_reg, aes(dose, tch))+
   theme_classic()
 
 graf.reg
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
