@@ -84,16 +84,16 @@ log10(100)
 
 # Preciso de ajuda --------------------------------------------------------------------------
 
-? log()
+?log()
 
 
 # Objetos -------------------------------------------------------------------------------------
 
 #'Tipos comuns
 #'
-#'-Vetores
-#'
-a <- c(2, 4, 6)
+#
+#'Vetores
+a <- c(2, 4, 6) #esse é um vetor 
 b <- c(3, 5, 7)
 
 #Posição do elemento
@@ -101,7 +101,7 @@ a[3]
 
 #Soma dos elementos
 sum(a)
-
+2+4+6
 #Contagem de elementos de um vetor
 length(a)
 #'
@@ -126,21 +126,20 @@ class(d)
 (d13c <- c(-24,-13,-26,-11))
 # criar um dataframe com esses vetores
 (dados <- data.frame(fisiologia, especie , d13c))
-
-#' #'
-#' #'Formato tibble
-#' #'
-#' library(tibble)
-#' dados <- as_tibble(dados)
-#' head(dados)
-#' str(dados)
+#'
+#'Formato tibble
+#'
+library(tibble)
+dados <- as_tibble(dados)
+head(dados)
+str(dados)
 
 #'-listas
 #'
 lista <- list(vetor_a = a,
               matrix_d = d,
               df = dados)
-lista
+lista$matrix_d
 #'
 #'Para acessar os objetos da lista use $ (lista$df)
 #'
@@ -150,7 +149,7 @@ anova(mod1)
 
 ff <- anova(mod1)
 ff$`F value`
-fcal <- ff$`Mean Sq` / 2
+fcal <- ff$`Mean Sq`/ 2
 fcal
 #'
 #'
@@ -176,6 +175,21 @@ mean(a)
 #'desvio padrão da seguinte amostra: 4,4,4
 #'
 
+dvp<-function(x){
+  xbar<-mean(x)
+  n<-length(x)
+  sqd <- sum((x - xbar)^2)
+  desvio<-sqrt(sqd/(length(x)-1))
+  return(desvio)
+  
+}
+
+deo <- c(4,4,4)
+dvp(deo)
+
+
+
+
 # Instalando pacotes -------------------------------------------------------------------
 #'
 #'O que é um pacote R?
@@ -186,6 +200,11 @@ mean(a)
 #'
 #'Refêrencia básica
 #'Livro: https://r-pkgs.org/
+#'
+library(readxl)
+library(tidyverse)
+
+#'
 #'
 #install.packages("readxl", "tidyverse", dep=TRUE)
 #Tools -> Install packages
@@ -200,6 +219,7 @@ if(!require(readxl))install.packages("readxl", dep = TRUE)
 #'Instale os pacotes: "dae", "jtools", "knitr", "kableExtra" e "plotly".
 #'
 #Carregar pacote
+library(dae)
 library(tidyverse)
 require(readxl)
 
@@ -209,6 +229,10 @@ require(readxl)
 #'
 #'1) File -> importe dataset
 #'
+#'
+library(readxl)
+dados_kozak2017 <- read_excel("dados/dados_kozak2017.xlsx")
+View(dados_kozak2017)
 #'2) Via comando
 #'
 #'Formato .csv
@@ -247,8 +271,10 @@ rm(list = ls(all = T))#Limpar memória
 
 dados_xlsx <- read_excel("dados/dados_kozak2017.xlsx", sheet = 1)
 head(dados_xlsx)
+#View(dados_xlsx)
 
 #Filtragem por tratamento
+library(tidyverse)
 dados_mani <- filter(dados_xlsx, trat == "A")
 view(dados_mani)
 
@@ -257,15 +283,15 @@ dados_mani_1 <- filter(dados_xlsx, trat != "A")
 view(dados_mani_1)
 
 #Excluindo o tratamento A
-dados_mani_2 <- filter(dados_xlsx, trat == "B" | trat == "C")
-view(dados_mani_2)
+#dados_mani_2 <- filter(dados_xlsx, trat == "B" | trat == "C")
+#view(dados_mani_2)
 
 #Transformando dados mutate()
 dados_mani_3 <- mutate(dados_xlsx, logy = log(y), raiz_y = sqrt(y))
 view(dados_mani_3)
 
 #Função select()
-dados_mani_4 <- select(dados_mani_3, trat, logy, raiz_y)
+dados_mani_4 <- select(dados_mani_3, trat, logy)
 view(dados_mani_4)
 
 #Função rename()
@@ -282,6 +308,10 @@ dados_mani_6 <- dados_mani_3 %>%
   )
 view(dados_mani_6)
 #'
+ss<-c(1,2,NA)
+ss
+mean(ss, na.rm = TRUE)
+
 #'##########################################################################
 #                           EXERCÍCIO                                     #
 #'#########################################################################
