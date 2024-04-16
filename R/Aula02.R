@@ -9,6 +9,7 @@ options(OutDec=".")#Separador decimal, útil para gráficos
 options(scipen = 100) #Elinando notação cientifica
 rm(list=ls(all=T))#Limpar memoria
 
+
 #Link do curso
 "https://uspdigital.usp.br/apolo/apoObterCurso?cod_curso=640400020&cod_edicao=24001&numseqofeedi=1"
 
@@ -24,7 +25,8 @@ if(!require(tidyverse))install.packages("tidyverse", dep = TRUE)
 if(!require(dae))install.packages("dae", dep = TRUE)
 if(!require(lmtest))install.packages("lmtest", dep = TRUE)
 if(!require(lawstat))install.packages("lawstat", dep = TRUE)
-if(!require(ExpDes.pt))install.packages("(ExpDes.pt", dep = TRUE)
+if(!require(ExpDes.pt))install.packages("ExpDes.pt", dep = TRUE)
+if(!require(viridis))install.packages("viridis", dep = TRUE)
 
 # DataViz -------------------------------------------------------------------------------------
 #'
@@ -34,7 +36,7 @@ if(!require(ExpDes.pt))install.packages("(ExpDes.pt", dep = TRUE)
 n <- 5000
 
 # Gerar amostras aleatórias de uma distribuição normal com média 0 e desvio padrão 1
-set.seed(10)
+set.seed(0853)
 #'
 #'Variáveis y1, y2
 y1 <- rnorm(n, mean = 0, sd = 1)
@@ -42,9 +44,10 @@ y2 <- rnorm(n, mean = 0, sd = 2)
 
 # Criar um data frame com os valores da amostra
 df <- data.frame(y1,y2)
+View(df)
 
 # Calcular a média e o desvio padrão da amostra
-media <- mean(df$y1)
+(media <- mean(df$y1))
 desvio_padrao <- sd(df$y1)
 
 # Criar o histograma com a densidade da distribuição normal
@@ -64,16 +67,16 @@ ggplot(df, aes(x=y1))+geom_histogram() #Gráfico básico do ggplot2
 #Camada 1
 ggplot(df, aes(x=y1)) +
   geom_histogram(aes(y = ..density..), bins = 30, #Número de barras
-                 fill = "#440154", #cor com nome próprio: prenchimento da barra
-                 color = "#FDE725")  #cor em HTML: borda da barra 
+                 fill = "black", #cor com nome próprio: prenchimento da barra
+                 color = "blue")  #cor em HTML: borda da barra 
 #'
 #'Camadas 1 e 2
 
 ggplot(df, aes(x=y1)) +
   geom_histogram(aes(y = ..density..), bins = 30, #Número de barras
-                 fill = "#440154", #cor com nome próprio: prenchimento da barra
-                 color = "#FDE725") + #cor em HTML: borda da barra 
-  geom_density(color = "#21918c", size = 1) +  #Adicionando a densidade da distribuição normal
+                 fill = "#fcfdbf", #cor com nome próprio: prenchimento da barra
+                 color = "#b73779") + #cor em HTML: borda da barra 
+  geom_density(color = "#000004", size = 0.8) +  #Adicionando a densidade da distribuição normal
  labs(title = "Distribuição Normal Simulada",
        x = "Valor", y = "Densidade") + theme_bw()
 
@@ -126,9 +129,38 @@ DIC.croqui<-function(trat, rep, semente){
 
 #'##############################################################
 #'
-DIC.croqui(trat=6, rep=3, semente=1806)
+DIC.croqui(trat=4, rep=5, semente=1806)
 DIC.croqui(trat=6, rep=3, semente=0810)
 
+
+# Gerando o croqui de um DBC ------------------------------------------------------------------
+
+# Número de tratamento
+(Trat <- gl(4,1,labels = c("Trat 1", "Trat 2", "Trat 3", "Trat 4")) )
+
+# Número de bloco
+(Bloco <- gl(5,1,labels = c("Bloco I", "Bloco II", "Bloco III", 
+                           "Bloco IV", "Bloco V")))
+
+# Número de parcelas
+(N <- length(levels(Trat))*length(levels(Bloco)))
+
+# Croqui
+DCB <- function(Trat,Bloco){
+  Trat_Bloco <- list(NA)
+  for(i in 1:length(levels(Bloco))){
+    Trat_Bloco[[i]]<-matrix(
+      sample(Trat,length(levels(Trat))))
+  }
+  Plan <- do.call(cbind.data.frame, Trat_Bloco)
+  colnames(Plan) <- c(levels(Bloco))
+  rownames(Plan) <- paste("Linha", c(1:length(levels(Trat))))
+  return(Plan)
+}
+# Croqui simples
+DCB(Trat,Bloco)
+#'
+#'
 
 # ANOVA: pressuposições ----------------------------------------------------------------------
 #'
@@ -177,6 +209,16 @@ box_plot <- ggplot(dados, aes(trat, y = y, fill = trat)) +
 box_plot
 
 # Verificando a normalidade -------------------------------------------------------------------
+#'
+#'#########################################################################
+#'O QUE ESSA FRASE QUER DIZER????                                         #
+#'                                                                        #
+#'A normalidade das variáveis​foi verificada com o teste de Shapiro-Wilk” #
+#'                                                                        #
+#'FRASE PRESENTE EM MUITOS ARTIGOS CIENTÍFICOS!!!                         #
+#'                                                                        #
+#'#########################################################################
+#'
 #'
 #'Hipóteses
 #'H0: a variável dependente segue distribuição normal;
@@ -255,8 +297,8 @@ qqline(dados2$y, col = "magenta", lwd = 2)
 #'
 dados<-transform(dados, trat=as.factor(trat))
 str(dados)
-
-mod1<-lm(y ~ trat, dados)
+#' yij = u + t + E
+mod1<-lm(y ~ trat, data=dados)
 anova(mod1)
 
 #com aov()
@@ -264,7 +306,7 @@ mod2<-aov(y ~ trat, dados)
 anova(mod2)
 
 #com glm()
-mod3<-glm(y ~ trat,family = "gaussian" ,dados)
+mod3<-glm(y ~ trat, family = "gaussian" ,dados)
 anova(mod3, test = "F")
 QMT<-4000.0/2
 QMR<-224.8/42
@@ -278,10 +320,14 @@ par(mfrow = c(1, 1))
 #'Obtenção dos resíduos
 #' 
 #'Resíduos simples
-res <- residuals(mod1)
+(res <- residuals(mod1))
+sum(res)
+
 pred<-predict(mod1)
 res<-dados$y-pred
-res
+sum(res)
+
+
 #'
 #'Resíduos estudentizados
 res_Stud <- rstandard(mod1)
@@ -385,6 +431,8 @@ str(dados3)
 mod3<-lm(y ~ trat+bloco, dados3)
 anova(mod3)
 
+matd<-model.matrix(mod3)
+matd
 
 par(mfrow = c(2, 2))
 plot(mod3)

@@ -14,8 +14,8 @@
 #'-Regressão linear múltipla
 #'
 # Opções de controle -----------------------------------------------------------------------------
-options(prompt = "R", continue = "+  ", width = 70, useFancyQuotes = FALSE)
 options(OutDec=".")#Separador decimal, útil para gráficos
+options(scipen = 100) #Elinando notação cientifica
 rm(list=ls(all=T))#Limpar memoria
 
 
@@ -34,6 +34,9 @@ if (!require(MASS))install.packages("MASS", dep = TRUE)
 if (!require(broom))install.packages("broom", dep = TRUE)
 if (!require(jtools))install.packages("jtools", dep = TRUE)
 if (!require(plotly))install.packages("plotly", dep = TRUE)
+if (!require(GGally))install.packages("GGally", dep = TRUE)
+if (!require(soiltestcorr))install.packages("soiltestcorr", dep = TRUE)
+
 
 
 # Conjunto de dados ---------------------------------------------------------------------------
@@ -43,7 +46,6 @@ if (!require(plotly))install.packages("plotly", dep = TRUE)
 #'escolhidos ao caso. Os aumentos de peso observados, em quilogramas,
 #'constam abaixo:
 #'
-
 y<- c(40,24,36,15,65,
       45,40,51,46,38,
       44,32,25,34,70,
@@ -89,30 +91,6 @@ Estat_descritiva %>%
 mod1<-lm(y ~ trat, data = dados)
 anova(mod1)
 
-# Outras opções para ANOVA --------------------------------------------------------------------
-# #com aov()
-# mod2<-aov(y ~ trat, dados)
-# summary(mod2)
-# #anova(mod2)
-# 
-# #com glm()
-# mod3<-glm(y ~ trat,family = "gaussian" ,dados)
-# summary(mod3)
-# anova(mod3, test = "F")
-# 
-# QMT<-4000.0/2
-# QMR<-224.8/42
-# Fcal
-# 
-# 
-# #library(car)
-# Anova(mod3, test = "F")
-# 
-# QMT<-4000.0/2
-# QMR<-224.8/42
-# Fcal<-QMT/QMR
-# Fcal
-
 
 # Pressuposições da ANOVA------------------------------------------------------------------------------
 
@@ -133,24 +111,33 @@ ggplot(dados, aes(x = trat, y = res_Stud)) +
 #'Transformação Box-cox
 #'
 #library(MASS)
-boxcox(dados$y ~ dados$trat,ylab="logaritmo da 
+boxcox(mod1,ylab="logaritmo da 
        verossimilhança") #lambda=0,5.
 #'
 #'Análise dos Dados Transformados
-dados$yt<- log(y+0.5)
-modelot<- lm(yt ~ trat, dados)
-
+#'Criando a variável transformada
+dados$yt<- log(dados$y+0.5)
+dados
 #'
-#'Checando as pressuposições
+#'Criando um novo modelo para análisar
+#'a variável transformada
+#'
+modelot<- lm(yt ~ trat, dados)
+anova(modelot)
+#'
+#'Deve-se checar as pressuposições do modelo
+#'novamente (normalidade e homogeneidade)
+#'
 par(mfrow = c(2, 2))
 plot(modelot)
 par(mfrow = c(1, 1))
 
+#Teste Shapiro-Wilk
 shapiro.test(rstandard(modelot))
-
 #'
-#'Tranformação Box-cox
-boxcox(modelot,lambda = seq(-4, 4, 1/10), ylab="logaritmo da verossimilhança")
+#'Checando-se se é necessário nova tranformação Box-cox
+boxcox(modelot,lambda = seq(-4, 4, 1/10), 
+       ylab="logaritmo da verossimilhança")
 #'
 #'Como o 1 está dentro do intervalo não é necessário transformação!
 #'
@@ -158,14 +145,12 @@ boxcox(modelot,lambda = seq(-4, 4, 1/10), ylab="logaritmo da verossimilhança")
 anova(modelot)
 #'
 #'
-
 # Teste de médias -----------------------------------------------------------------------------
 #'
 #'Recurso da biblioteca agricolae
 Tukey <- HSD.test(modelot,"trat",alpha=0.05,console=TRUE)
 Duncan <- duncan.test(modelot,"trat",alpha=0.05,console=TRUE)
 LSD_Fisher <- LSD.test(modelot,"trat",alpha=0.05,console=TRUE)
-
 #'
 #'Apresentação das médias
 round((tapply(dados$y, dados$trat, mean)),4) 
@@ -252,9 +237,9 @@ ggsave(
 
 # Análise de regressão ----------------------------------------------------------------
 #'
-#'Suponhamos um experimento (fictício) de produção de cana-de-açurcar em que 
+#'Suponhamos um experimento (fictício) de produção de cana-de-açúcar em que 
 #'se usaram seis doses de nitrogênio (0, 50, 100, 150 e 200 kg/ha). 
-#'A variável resposta considerada aqui foi o peso dos colmos em toneladas por  
+#'A variável resposta considerada aqui foi a massa seca dos colmos em toneladas por  
 #'hectare (tch).
 #'
 #'Dados
@@ -273,10 +258,28 @@ View(dados_reg)
 #'#########################################################################
 #'
 #'
-modANOVA<-lm(tch~as.factor(dose), dados_reg)
+modANOVA_fator<-lm(tch~as.factor(dose), dados_reg)
+anova(modANOVA_fator)
+#'
+#'
+#'Caso dose não seja considerada fator veja o que ocorre.
+#'
+modANOVA<-lm(tch~dose, dados_reg)
 anova(modANOVA)
+summary(modANOVA)
 #'
+#'#'Graus de liberdade são colocados no resíduo!!!
 #'
+#'Estatística descritiva desse experimento
+#'
+Estat_descritiva_reg <- dados_reg %>%
+  group_by(dose) %>% summarise(
+    media = mean(tch, na.rm = TRUE),
+    SD = sd(tch, na.rm = TRUE)
+  )
+
+Estat_descritiva_reg 
+
 #'##########################################################################
 #                            GRÁFICO DE DISPERSÃO                          #
 #'#########################################################################
@@ -293,27 +296,35 @@ ggplot(dados_reg, aes(x = dose, y = tch)) +
 #'
 #'Modelo estatístico:
 #'
-#'Y = a + bx+ erro;
+#'Y = b0 + b1x+ erro;
 #'
 modlinear= lm(tch ~ dose, dados_reg)
 summary(modlinear)
-
 #'
-#'Y = a + b1X + b2X^2 + erro;
+#'Y = b0 + b1X + b2X^2 + erro;
 #' 
 modquad<-lm(tch ~ dose+I(dose^2), dados_reg)
 summary(modquad)
-
-
+#'
+#'
 #função 'summ' do pacote 'jtools'
 summ(modquad, confint = T, digits = 4, ci.width = .95)
-
+#'
+#'
+#'Cálculo manual do R2
+#'
+predito <- predict(modquad)
+predito
+R2<-(cor(dados_reg$tch, predito)^2)
+R2
 #'
 #'Verificando a falta de ajuste
 #'
+anova(modANOVA_fator)
 anova(lm(tch ~ dose + I(dose^2) + as.factor(dose)))
 #'
 #'
+
 #'Plotando o resultado
 #'
 ggplotly(
@@ -326,7 +337,6 @@ ggplot(dados_reg, aes(dose, tch))+
   theme_classic()
 )
 
-
 #'
 #'##########################################################################
 #                           EXERCÍCIO                                     #
@@ -334,7 +344,7 @@ ggplot(dados_reg, aes(dose, tch))+
 #'
 #'Calcule a produção máxima teórica de cana-de-açúcar, com cálculos,
 #'com base no modelo quadrático acima. 
-
+#'
 #'Gráfico estilizado
 #'
 # Valores de exibição
@@ -362,31 +372,120 @@ graf.reg <- ggplot(dados_reg, aes(dose, tch))+
 
 graf.reg
 
+#'
+#'##########################################################################
+#                           EXERCÍCIO                                     #
+#'#########################################################################
+#'
+#'Salve a figura "graf.reg" no formato png com resolução de 400 dpi e 
+#'coloque na pasta figuras.
+#'
+#'
+# Regressão linear multipla -------------------------------------------------------------------
+#'
+#'
+#'Y = b0 + b1X1 + b2X2 + ... + bpXp+ erro;
+#'
+# Conjunto de dados N total-------------------------------------------------
+#'
+#'Vamos trabalhar com o conjunto de dados árvore para isso limpe a memória
+#'do R!!!
+#'
+rm(list=ls(all=T))#Limpar memoria
+predicaoN <- read_excel("dados/predicaoN.xlsx")
+str(predicaoN)
+
+#'
+#'##########################################################################
+#       Monte o modelo de regressão linear múltiplo                        #                      
+# OBJETIVO: construir um modelo preditivo para estimar o N total do solo.  #
+#'#########################################################################
+#'
+#library(GGally) 
+Scatter_Matrix <- ggpairs(predicaoN, 
+                          title = "Scatter Plot", 
+                          axisLabels = "show") 
+
+Scatter_Matrix
+
+#'
+#'Modelo completo
+multreg<-lm(NTS ~., data = predicaoN)
+summary(multreg)
+
+#'
+#'Fazendo a seleção de preditores com o critério AIC (library(MASS))
+#'
+multreg2<-lm(NTS ~.,  data = predicaoN)%>%stepAIC(direction = "both")
+summary(multreg2)
+
+#'
+#'Modelo preditivo
+predicaoN$NTS_pred<-predict(multreg2)
+
+plot.pred <-ggplot(predicaoN, aes(x = NTS_pred, y = NTS )) + 
+  geom_point(alpha = 1/2) + 
+  geom_abline(intercept = 0, slope = 1,colour = "grey") +
+  stat_smooth(method = lm, colour = "black", se = T) +
+  scale_x_continuous(limits=c(0, 1.5)) +
+  scale_y_continuous(limits=c(0, 1.5)) +
+  xlab("NTS predito") + # adiciona descrição do eixo x
+  ylab("NTS observado") + 
+  theme_classic()
+
+plot.pred
 
 
-
-
-
+# Linear + Platô ------------------------------------------------------------------------------
 # Set and get working directory
-setwd("C://Users/dumar/Google Drive/R")
-getwd()
-library(tidyverse)
+
 library(soiltestcorr)
+#https://adriancorrendo.github.io/soiltestcorr/
 data <- (soiltestcorr::freitas1966)
 view(data)
 #write.csv(data, "freitas1966.csv", row.names=FALSE)
-plotlp <-  linear_plateau(data, STK, RY, plot = TRUE)
-plotlp
+#'
+#'Modelo linear (sitaxe ggplot2)
+linear_plato <-  linear_plateau(data, STK, RY, plot = TRUE)
+linear_plato
+
+#'
+#'Customização do gráfico
+teste<-linear_plato +
+  # Main title
+  ggtitle("My own plot title")+
+  # Axis titles
+  labs(x = "Soil Test K (ppm)",
+       y = "Cotton RY(%)") +
+  # Axis scales
+  scale_x_continuous(limits = c(20,220),
+                     breaks = seq(0,220, by = 10)) +
+  # Axis limits
+  scale_y_continuous(limits = c(30,100),
+                     breaks = seq(30,100, by = 10))
+
+teste
+
 ggsave(
-  plot = plotlp,
-  file = "linear+plateau.png",
+  plot = linear_plato,
+  file = "figuras/linear+plateau.png",
   type = "cairo",
   width = 7,
   height = 5,
   dpi = 300
 )
 
+#'
+#'Modelo quadrático (sitaxe ggplot2)
+quadratic_plato <-  quadratic_plateau(data, STK, RY, plot = TRUE) 
+quadratic_plato
 
-# Linear + Platô ------------------------------------------------------------------------------
-
+ggsave(
+  plot = quadratic_plato,
+  file = "figuras/quadratic+plateau.png",
+  type = "cairo",
+  width = 7,
+  height = 5,
+  dpi = 300
+)
 
