@@ -14,30 +14,28 @@
 #'-Regressão linear múltipla
 #'
 # Opções de controle -----------------------------------------------------------------------------
-options(OutDec=".")#Separador decimal, útil para gráficos
+options(OutDec=",")#Separador decimal, útil para gráficos
 options(scipen = 100) #Elinando notação cientifica
 rm(list=ls(all=T))#Limpar memoria
 
 
 # Pacotes -------------------------------------------------------------------------------------
-if (!require(readxl))install.packages("readxl", dep = TRUE)
-if (!require(tidyverse))install.packages("tidyverse", dep = TRUE)
-if (!require(ExpDes.pt))install.packages("ExpDes.pt", dep = TRUE)
-if (!require(agricolae))install.packages("agricolae", dep = TRUE)
-if (!require(knitr))install.packages("knitr", dep = TRUE)
-if (!require(kableExtra))install.packages("kableExtra", dep = TRUE)
-if (!require(car))install.packages("car", dep = TRUE)
-if (!require(emmeans))install.packages("emmeans", dep = TRUE)
-if (!require(lmtest))install.packages("lmtest", dep = TRUE)
-if (!require(lawstat))install.packages("lawstat", dep = TRUE)
-if (!require(MASS))install.packages("MASS", dep = TRUE)
-if (!require(broom))install.packages("broom", dep = TRUE)
-if (!require(jtools))install.packages("jtools", dep = TRUE)
-if (!require(plotly))install.packages("plotly", dep = TRUE)
-if (!require(GGally))install.packages("GGally", dep = TRUE)
-if (!require(soiltestcorr))install.packages("soiltestcorr", dep = TRUE)
-
-
+if(!require(readxl))install.packages("readxl", dep = TRUE)
+if(!require(tidyverse))install.packages("tidyverse", dep = TRUE)
+if(!require(ExpDes.pt))install.packages("ExpDes.pt", dep = TRUE)
+if(!require(agricolae))install.packages("agricolae", dep = TRUE)
+if(!require(knitr))install.packages("knitr", dep = TRUE)
+if(!require(kableExtra))install.packages("kableExtra", dep = TRUE)
+if(!require(car))install.packages("car", dep = TRUE)
+if(!require(emmeans))install.packages("emmeans", dep = TRUE)
+if(!require(lmtest))install.packages("lmtest", dep = TRUE)
+if(!require(lawstat))install.packages("lawstat", dep = TRUE)
+if(!require(MASS))install.packages("MASS", dep = TRUE)
+if(!require(broom))install.packages("broom", dep = TRUE)
+if(!require(jtools))install.packages("jtools", dep = TRUE)
+if(!require(plotly))install.packages("plotly", dep = TRUE)
+if(!require(GGally))install.packages("GGally", dep = TRUE)
+if(!require(soiltestcorr))install.packages("soiltestcorr", dep = TRUE)
 
 # Conjunto de dados ---------------------------------------------------------------------------
 #'
@@ -51,12 +49,13 @@ y<- c(40,24,36,15,65,
       44,32,25,34,70,
       19,17,18,13,16)
 trat<- rep(c("A","B","C","D"), each=5)
-dados<- data.frame(trat, y)
+dados<- data.frame(y,trat)
+dados
 
 tabela <- dados %>%
   kable() %>%
   kable_styling(bootstrap_options = "striped",
-                full_width = F,
+                full_width = T,
                 font_size = 15)
 tabela
 
@@ -69,6 +68,7 @@ str(dados)
 #'
 #'Estatística descritiva desse experimento
 #'
+library(tidyverse)
 Estat_descritiva <- dados %>%
   group_by(trat) %>% summarise(
     media = mean(y, na.rm = TRUE),
@@ -115,8 +115,9 @@ boxcox(mod1,ylab="logaritmo da
        verossimilhança") #lambda=0,5.
 #'
 #'Análise dos Dados Transformados
-#'Criando a variável transformada
-dados$yt<- log(dados$y+0.5)
+#'Criando a variável transformada mutate()
+
+dados <- mutate(dados, yt = log(y+0.5))
 dados
 #'
 #'Criando um novo modelo para análisar
@@ -135,6 +136,13 @@ par(mfrow = c(1, 1))
 #Teste Shapiro-Wilk
 shapiro.test(rstandard(modelot))
 #'
+#'
+# Verificando homogeneidade de variâncias
+ggplot(dados, aes(x = trat, y = rstandard(modelot))) +
+  geom_dotplot(binaxis = "y", stackdir = "center", fill = "steelblue") +
+  labs(x = "Variedade", y = "Resíduos Studentizados") +
+  theme_minimal()
+#'
 #'Checando-se se é necessário nova tranformação Box-cox
 boxcox(modelot,lambda = seq(-4, 4, 1/10), 
        ylab="logaritmo da verossimilhança")
@@ -150,18 +158,30 @@ anova(modelot)
 #'Recurso da biblioteca agricolae
 Tukey <- HSD.test(modelot,"trat",alpha=0.05,console=TRUE)
 Duncan <- duncan.test(modelot,"trat",alpha=0.05,console=TRUE)
+Duncan
 LSD_Fisher <- LSD.test(modelot,"trat",alpha=0.05,console=TRUE)
 #'
 #'Apresentação das médias
-round((tapply(dados$y, dados$trat, mean)),4) 
+#'
+#Combinando operações com pipe (%>%)
+mediatrat <- dados %>%
+  group_by(trat) %>% summarise(
+    mediaY = mean(y, na.rm = TRUE),
+    SDY = sd(y, na.rm = TRUE)
+  )
+mediatrat 
+
 #'
 #'
 #'Apresentação gráfica
 #'
-# Médias marginais ajustdas.
+# Médias marginais ajustadas.
 emm <- emmeans(mod1, specs = ~trat)
 emm
 
+anova(mod1)
+sqrt(175.33/5)
+  
 results <- Tukey$groups %>%
   rownames_to_column(var = "trat") %>%
   mutate(groups = str_trim(as.character(groups)))
@@ -172,14 +192,15 @@ results
 
 fig1<- ggplot(data = results,
        mapping = aes(x = trat, y = emmean)) +
-  geom_point(dados,mapping = aes(trat, y, color="magenta"), shape=15, show.legend = F)+
+  geom_point(dados,mapping = aes(trat, y, color="magenta"), 
+             shape=15, show.legend = F)+
   geom_point(color = "black") +
   geom_errorbar(mapping = aes(ymin = lower.CL, ymax = upper.CL),
                 width = 0.1,size  = 0.3) +
   geom_label(mapping = aes(label = sprintf("%0.2f %s",
                                            emmean, groups)),
              nudge_y = 4.25, fill= "#00FFFF")+
-  theme_test(base_size =12, base_family = "sans")+theme_bw()+
+  theme_test(base_size =12, base_family = "serif")+theme_bw()+
   theme(axis.text.x = element_text(color = "black", size = 8),
         axis.text.y = element_text(color = "black"),
         panel.spacing = unit(0, "cm"),
@@ -191,38 +212,39 @@ fig1<- ggplot(data = results,
 fig1
 
 #'
-#'Salvando a figura
-png(filename="figuras/fig1.png", # Nome do arquivo e extensão
-    width = 4,    # largura
-    height = 4,   # Altura
-    res= 400,# Resolução em dpi
-    family = "serif", #fonte
-    units = "in")  # Unidades.
-fig1
-dev.off() # Fecha a janela gráfica
-
+#' #'Salvando a figura
+#' tiff(filename="figuras/fig1.tiff", # Nome do arquivo e extensão
+#'     width = 4,    # largura
+#'     height = 4,   # Altura
+#'     res= 400,# Resolução em dpi
+#'     family = "serif", #fonte
+#'     units = "in")  # Unidades.
+#' fig1
+#' dev.off() # Fecha a janela gráfica
+#' 
+#' 
+#' #'
+#' #'Mudando a fonte para Arial e resolução
+#' png(filename="figuras/fig1b.png", # Nome do arquivo e extensão
+#'     width = 4,    # largura
+#'     height = 4,   # Altura
+#'     res= 600,# Resolução em dpi
+#'     family = "sans", #fonte
+#'     units = "in")  # Unidades.
+#' fig1
+#' #dev.off() # Fecha a janela gráfica
+#' 
+#' 
+#' jpeg(filename="figuras/fig1c.jpeg", # Nome do arquivo e extensão
+#'     width = 4,    # largura
+#'     height = 4,   # Altura
+#'     res= 600,# Resolução em dpi
+#'     family = "sans", #fonte
+#'     units = "in")  # Unidades.
+#' fig1
+#' dev.off() # Fecha a janela gráfica
 
 #'
-#'Mudando a fonte para Arial e resolução
-png(filename="figuras/fig1b.png", # Nome do arquivo e extensão
-    width = 4,    # largura
-    height = 4,   # Altura
-    res= 600,# Resolução em dpi
-    family = "sans", #fonte
-    units = "in")  # Unidades.
-fig1
-dev.off() # Fecha a janela gráfica
-
-
-jpeg(filename="figuras/fig1c.jpeg", # Nome do arquivo e extensão
-    width = 4,    # largura
-    height = 4,   # Altura
-    res= 600,# Resolução em dpi
-    family = "sans", #fonte
-    units = "in")  # Unidades.
-fig1
-dev.off() # Fecha a janela gráfica
-
 #'
 #'Outro forma salvar figura
 #'
@@ -268,6 +290,13 @@ modANOVA<-lm(tch~dose, dados_reg)
 anova(modANOVA)
 summary(modANOVA)
 #'
+#'Modelo de regressão na unha
+#'Betas = (X'X)^-1X'Y MQ
+X<-model.matrix(modANOVA)
+Y<-as.matrix(dados_reg$tch)
+betas<-solve(t(X)%*%X)%*%t(X)%*%Y
+betas
+           
 #'#'Graus de liberdade são colocados no resíduo!!!
 #'
 #'Estatística descritiva desse experimento
@@ -306,6 +335,8 @@ summary(modlinear)
 modquad<-lm(tch ~ dose+I(dose^2), dados_reg)
 summary(modquad)
 #'
+AIC(modlinear)
+AIC(modquad)
 #'
 #função 'summ' do pacote 'jtools'
 summ(modquad, confint = T, digits = 4, ci.width = .95)
@@ -330,7 +361,7 @@ anova(lm(tch ~ dose + I(dose^2) + as.factor(dose)))
 ggplotly(
 ggplot(dados_reg, aes(dose, tch))+
       geom_point(color = "#39568CFF", shape=16, size=1)+
-  geom_smooth(method = lm, formula = y ~ x+I(x^2), level = 0.95)+
+  geom_smooth(method = lm, formula = y ~ x+I(x^2),level = 0.95)+
   geom_hline(yintercept = 17.2, color = "grey50", size = .5) +
   labs(x = "Dose em kg/ha de nitrogênio",
        y = "Produção de colmo em t/ha") +
@@ -388,19 +419,19 @@ graf.reg
 #'
 # Conjunto de dados N total-------------------------------------------------
 #'
-#'Vamos trabalhar com o conjunto de dados árvore para isso limpe a memória
-#'do R!!!
+#'Vamos trabalhar com o conjunto de dados predição de N total no solo.
 #'
 rm(list=ls(all=T))#Limpar memoria
 predicaoN <- read_excel("dados/predicaoN.xlsx")
 str(predicaoN)
-
+predicaoN
 #'
 #'##########################################################################
 #       Monte o modelo de regressão linear múltiplo                        #                      
 # OBJETIVO: construir um modelo preditivo para estimar o N total do solo.  #
 #'#########################################################################
 #'
+#'Insperção visual das relações entre as variáveis preditoras
 #library(GGally) 
 Scatter_Matrix <- ggpairs(predicaoN, 
                           title = "Scatter Plot", 
@@ -437,9 +468,10 @@ plot.pred
 
 
 # Linear + Platô ------------------------------------------------------------------------------
-# Set and get working directory
-
-library(soiltestcorr)
+#'
+#'Exemplo mais sosfisticado de análise de regressão!
+#'
+#library(soiltestcorr)
 #https://adriancorrendo.github.io/soiltestcorr/
 data <- (soiltestcorr::freitas1966)
 view(data)

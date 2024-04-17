@@ -13,74 +13,155 @@
 #'-Interpretação dos componentes de variância.
 #'
 # Opções de controle -----------------------------------------------------------------------------
-options(prompt = "R", continue = "+  ", width = 70, useFancyQuotes = FALSE)
 options(OutDec=".")#Separador decimal, útil para gráficos
 options(scipen = 100) #Elinando notação cientifica
 rm(list=ls(all=T))#Limpar memoria
 
-# Pacotes -------------------------------------------------------------------------------------
-if (!require(lme4))install.packages("lme4", dep = TRUE)
-if (!require(lmerTest))install.packages("lmerTest", dep = TRUE)
-if (!require(emmeans))install.packages("emmeans", dep = TRUE)
-if (!require(multcomp))install.packages("multcomp", dep = TRUE)
-
-
-# DIC: tratamento com efeito aleatório --------------------------------------------------------
-
-eucalip <- read_excel("dados/eucalip.xlsx")
-str(eucalip)
-
-eucalip<-transform(eucalip, clone=as.factor(clone))
-str(eucalip)
+# Pacotes ---------------------------------------------------------------------------------------
+if(!require(readxl))install.packages("readxl", dep = TRUE)
+if(!require(agricolae))install.packages("agricolae", dep = TRUE)
+if(!require(lme4))install.packages("lme4", dep = TRUE)
+if(!require(lmerTest))install.packages("lmerTest", dep = TRUE)
+if(!require(MuMIn))install.packages("MuMIn", dep = TRUE)
+if(!require(emmeans))install.packages("emmeans", dep = TRUE)
+if(!require(multcomp))install.packages("multcomp", dep = TRUE)
+if(!require(knitr))install.packages("knitr", dep = TRUE)
 
 #'
-#'Modelo de efeito fixo
+# DIC: tratamento com efeito fixo e aleatório -----------------------------------------------------
+# Conjunto de dados Eucaliptus --------------------------------------------------------------------
 #'
-modfixo <- lm(volmad~clone, eucalip)
-anova(modfixo)
+#'##########################################################################
+# CHEGOU A HORA DE COLOCAR A MÃO NA MASSA:                                 #
+# (1) - Carregue o cojunto de dados eucalip.xlsx;                          #
+# (2) - Guarde os dados no objeto -> eucalip;                              #
+# (3) - Monte o modelo estatístico, chame o modelo de "modfixo"            #
+# (4) - Realize a análise de variância;                                    #
+# (5) - Faça o teste Tukey com alpha de 5%.                                #
+#'#########################################################################
+#'
+#'O conjunto de dadis eucalip.xlsx, referem-se ao volume de madeira, 
+#'de um experimento completamento casualizado, para avaliação de clones
+#' de Eucaliptus camaldulensis.
+#'
+#'COMECE A PROGRAMAR!
 
+
+
+
+
+
+
+
+
+# Obtenha os componentes de variância, assumindo clone como de efeito aletório---------------------
 #'
-#'Máxima verossimilha (ML)
-modclone1 <- lmer(volmad~1+(1|clone), eucalip, 
-                REML = FALSE)
+#'#######################################################################
+#                            HIPÓTESES                                  #
+# H0: sigma2 = 0                                                        #
+# Ha: sigma2 > 0                                                        #
+#'#######################################################################
+#'
+#'Modelo de efeito aleatório
+#'
+#'Volume = u + clone + erro
+#'
+#'Componentes de variância
+#'
+#'clone ~ N(0, sigma2_clone)
+#'
+#'erro ~ N(0, sigma2_res)
+#'
+#'#######################################################################
+#       Diferentes métodos de estimação                                 #
+# (1) - Máxima verossimilha (ML)
+# (2) - Máxima verossimilha restrita (REML)
+#'####################################################################### 
+#'
+#'(1) - Máxima verossimilha (ML)
+modclone1 <- lmer(volmad~1 + (1|clone), eucalip, REML = FALSE)
 summary(modclone1)
 
+#'#######################################################################
+#       DEMOSTRAÇÃO DAS PARTES DO MODELO MISTO                          #
+#'#######################################################################
+#Extraindo as matrizes X e Z
+#'
+#'Y=XB+Zu+erro
+#'
+X <- modclone1@pp$X #matriz de efeitos fixos
+X
+Z <- modclone1@pp$Zt #matriz de efeitos aleatórios
+Z
 
-#'Máxima verossimilha restrita (REML)
+#' (2) - Máxima verossimilha restrita (REML)
 modclone2 <- lmer(volmad~1+(1|clone), eucalip, 
                 REML = TRUE)
 
 summary(modclone1)
 summary(modclone2)
 
+# --------------- Saídas
 
+output_comp <- data.frame(
+  ML = c(2073.7, 874.3),
+  REML = c(2336.5, 874.3)
+)
 
-# DBC: bloco de efeito de aleatório -----------------------------------------------------------
+row.names(output_comp) <- c('sigma^2_clone', 'sigma^2')
 
-alfafa <- read_excel("dados/alfafa.xlsx")
-str(alfafa)
-
-alfafa<-transform(alfafa, variedade=as.factor(variedade), 
-                  bloco=as.factor(bloco))
-str(alfafa)
-
-#'
-#'Modelo de efeito fixo
-#'
-modfixo <- lm(prod~variedade+bloco, alfafa)
-anova(modfixo)
+kable(
+  output_comp,
+  caption = 'Valores dos componentes de variância estimados pelos métodos: ML e REML'
+)
 
 #'
-#'Modelo de efeito aleatório para bloco
+#'CONCLUSÃO: Nota-se que a estimativa dos componentes de variância para os
+#'métodos ML e REML diferem. Nesse caso opta-se pela estimativa dada pelo 
+#'método REML.
+#'
+#'
+# DBC: bloco de efeito fixo e aleatório -----------------------------------------------------------
+#'
+#'##########################################################################
+# CHEGOU A HORA DE COLOCAR A MÃO NA MASSA:                                 #
+# (1) - Carregue o cojunto de dados alfafa.xlsx;                           #
+# (2) - Guarde os dados no objeto -> alfafa;                               #
+# (3) - Monte o modelo estatístico, chame o modelo de "modfixo"            #
+# (4) - Realize a análise de variância;                                    #
+# (5) - Faça o teste Tukey com alpha de 5%.                                #
+#'#########################################################################
+#'
+#'O conjunto de dadis alfafa.xlsx, referem-se a produção de 12 variedade alfafa 
+#'em tonelas por hectare. O experimento foi conduzido em  blocos casualizados.
+#'
+#'COMECE A PROGRAMAR!
+
+
+
+
+
+
+
+# Modelo de efeito aleatório para bloco -------------------------------------------------------
+#'
+#'
+#'prod = u + bloco + variedade+ erro
+#'
+#'Componentes de variância
+#'
+#'bloco ~ N(0, sigma2_bloco)
+#'
+#'erro ~ N(0, sigma2_res)
 #'
 mod_aleat_bloco <- lmer(prod~variedade+(1|bloco), alfafa)
 summary(mod_aleat_bloco)
 
-
+#'
 #'Anova tipo 3 teste para efeito fixo de variedade
 anova(mod_aleat_bloco, ddf = "Kenward-Roger")
 #'
-#'Médias marginais
+#'Médias marginais: teste Tukey
 #'E(Y)=XB
 #'
 emmeans(mod_aleat_bloco, pairwise ~ variedade, adjust = "tukey")
@@ -91,42 +172,63 @@ cld(letter,
     reversed = TRUE)
 
 #'
-#'Calculo do coeficiente de herdabilidade
 #'
-mod_var <- lmer(prod~(1|variedade)+bloco, alfafa)
-summary(mod_var)
+#'##########################################################################
+# CHEGOU A HORA DE COLOCAR A MÃO NA MASSA:                                 #
+#                                                                          #
+# (1) - Construa um novo modelo misto com o seguinte nome -> "mod_var",    #
+#        com variedade de efeito aleatório e bloco fixo;                   #
+#                                                                          #
+# (2) - Obtenta a variância total do modelo, salvando no objeto var_total; #
+#                                                                          #
+# (3) - Calcule a herdabilidade.                                           #
+#'#########################################################################
+#'COMECE A PROGRAMAR!
 
-#'
-#'Coeficiente de herdabilidade
-(var_total<-0.02768+(0.04765/6))
-(h2<-0.02768/var_total)
 
-#'
-#'
+
+
+
 
 # Modelo hierárquico (fatores aninhados) -------------------------------------------------------
+#'
+# Conjunto de dados peso de bezerros ----------------------------------------------------------
 #'
 #'Avaliando a contribuição genética de touro e vaca no peso de bezerros
 #'recém nascido.
 #'
 pesobezerros <- read_excel("dados/pesobezerros.xlsx")
 str(pesobezerros)
-
+#'
+#'Transformando em fatores
 pesobezerros<-transform(pesobezerros,  touro=as.factor(touro), vaca=as.factor(vaca ))
 str(pesobezerros)
 
 #'
+#'##########################################################################
+# MODELO ESTATÍSTICO                                                       #
+#                                                                          #
+#Yijk = U + Ai + B(i)j + erro(ij)k                                         #
+#                                                                          #
+# onde, U é media geral, Ai é o efeito para cada i touro, B(i)j é o efeito # 
+# de vaca j inseminda com o touro i, erro(ij)k é o efeito de cada bezerro. #
+#                                                                          #
+#'#########################################################################
+#'
+#'
 #'Modelos de efeito fixo
 #'
-
 modfixo <- lm(peso_bezerro ~ touro/vaca, pesobezerros)
 anova(modfixo)
-
+#'
+###########################################################################
+# OJETIVO DESSA ANÁLISE PARTICIONAMENTO DA VARIÂNCIA                      #
+#'########################################################################
+#'
 #'
 #'Máxima verossimilha restrita (REML)
-mod_misto <- lmer(peso_bezerro ~1+(1|touro/vaca), pesobezerros, REML = TRUE)
+mod_misto <- lmer(peso_bezerro ~1 + (1|touro/vaca), pesobezerros, REML = TRUE)
 summary(mod_misto)
-
 #'
 #'Particionamento da variabilidade: quanto cada fator explica a variância do peso
 #Contribuição dos pais 
@@ -137,8 +239,10 @@ summary(mod_misto)
 
 
 # Medidas repetidas no tempo ------------------------------------------------------------------
-
-# Dataset (Mariano et al., 2019)
+#'
+#'########################################################################
+# Dataset (Mariano et al., 2019)                                        #
+#'########################################################################
 #'
 #'Foi conduzido um experimento em condições controladas para quantificação da emissão
 #'de amônia de fertilizantes com base em ureia. Foram utilizadas sete fertilizantes
@@ -179,8 +283,6 @@ volatizacao<-transform(volatizacao,
 
 str(volatizacao)
 #'
-
-
 #'Máxima verossimilha restrita (REML)
 modrep <- lmer(nh3 ~ fert * tempo + (1| parcela) , data = volatizacao, 
                 REML = TRUE)
