@@ -19,6 +19,7 @@ rm(list=ls(all=T))#Limpar memoria
 
 # Pacotes ---------------------------------------------------------------------------------------
 if(!require(readxl))install.packages("readxl", dep = TRUE)
+if(!require(tidyverse))install.packages("tidyverse", dep = TRUE)
 if(!require(agricolae))install.packages("agricolae", dep = TRUE)
 if(!require(lme4))install.packages("lme4", dep = TRUE)
 if(!require(lmerTest))install.packages("lmerTest", dep = TRUE)
@@ -45,14 +46,45 @@ if(!require(knitr))install.packages("knitr", dep = TRUE)
 #' de Eucaliptus camaldulensis.
 #'
 #'COMECE A PROGRAMAR!
-
-
-
-
-
-
-
-
+#'##########################################################################
+# Passo 1 e 2:                                                             #
+#'##########################################################################
+#'
+eucalip <- read_excel("dados/eucalip.xlsx")
+str(eucalip) #Checagem da estrutura dos dados
+#'
+#'Transformar em fator
+eucalip<-transform(eucalip, clone=as.factor(clone))
+str(eucalip) #Checagem da estrutura dos dados
+#'
+#'##########################################################################
+# Passo 3 - 5:                                                             #
+#'##########################################################################
+#' 
+# Obtendo a tabela da ANOVA, com teste F para clones ------------------------------------------
+#'
+#'Modelo de efeito fixo
+#'
+#'Volume = u + clone + erro
+#'
+#'modfixo <- lm(variavelresposta ~ modelo, nomedataset)
+#'
+modfixo <- lm(volmad ~ clone, data=eucalip)
+anova(modfixo)
+#'
+#'Teste F: hipóteses
+#'H0: mu_1 = mu_2 =... mu_i = mu;
+#'Ha: pelos menos um contraste de médias difere de zero.
+#'
+#'CONCLUSÃO: Existe diferênça entre os clones de Eucaliptus camaldulensis!
+#'
+#'TESTE TUKEY
+#'
+# Teste de médias -----------------------------------------------------------------------------
+#'
+#'Recurso da biblioteca agricolae
+#'Teste <- tipo.test(nomedomodelo,"oquevocequertestar",alpha=0.05,console=TRUE)
+Tukey <- HSD.test(modfixo,"clone",alpha=0.05,console=TRUE)
 
 # Obtenha os componentes de variância, assumindo clone como de efeito aletório---------------------
 #'
@@ -79,8 +111,10 @@ if(!require(knitr))install.packages("knitr", dep = TRUE)
 #'####################################################################### 
 #'
 #'(1) - Máxima verossimilha (ML)
-modclone1 <- lmer(volmad~1 + (1|clone), eucalip, REML = FALSE)
+modclone1 <- lmerTest::lmer(volmad ~ 1 + (1|clone), data=eucalip, 
+                            REML = FALSE)
 summary(modclone1)
+(ybar<-mean(eucalip$volmad))
 
 #'#######################################################################
 #       DEMOSTRAÇÃO DAS PARTES DO MODELO MISTO                          #
@@ -136,12 +170,43 @@ kable(
 #'em tonelas por hectare. O experimento foi conduzido em  blocos casualizados.
 #'
 #'COMECE A PROGRAMAR!
+# Modelo de efeito fixo -----------------------------------------------------------------------
+#'##########################################################################
+# Passo 1 e 2:                                                             #
+#'##########################################################################
+#'
+alfafa <- read_excel("dados/alfafa.xlsx")
+str(alfafa)
+
+alfafa<-transform(alfafa, variedade=as.factor(variedade), 
+                  bloco=as.factor(bloco))
+str(alfafa)
 
 
+# Obtendo a tabela da ANOVA, com teste F variedades ------------------------------------------
+#'
+#'Modelo de efeito fixo
+#'
+#'prod = u + bloco + variedade+ erro
+#'
+#'
+#'Modelo de efeito fixo
+#'
+modfixo <- lm(prod ~ bloco+variedade, data=alfafa)
+anova(modfixo)
 
-
-
-
+#'Teste F: hipóteses
+#'H0: mu_1 = mu_2 =... mu_i = mu;
+#'Ha: pelos menos um contraste de médias difere de zero.
+#'
+#'CONCLUSÃO: Existe diferênça entre variedades de alfafa!
+#'
+#'TESTE TUKEY
+#'
+# Teste de médias -----------------------------------------------------------------------------
+#'
+#'Recurso da biblioteca agricolae
+Tukey <- HSD.test(modfixo,"variedade",alpha=0.05,console=TRUE)
 
 # Modelo de efeito aleatório para bloco -------------------------------------------------------
 #'
@@ -154,7 +219,7 @@ kable(
 #'
 #'erro ~ N(0, sigma2_res)
 #'
-mod_aleat_bloco <- lmer(prod~variedade+(1|bloco), alfafa)
+mod_aleat_bloco <- lmerTest::lmer(prod ~ variedade + (1|bloco), data=alfafa)
 summary(mod_aleat_bloco)
 
 #'
@@ -173,22 +238,61 @@ cld(letter,
 
 #'
 #'
-#'##########################################################################
-# CHEGOU A HORA DE COLOCAR A MÃO NA MASSA:                                 #
-#                                                                          #
-# (1) - Construa um novo modelo misto com o seguinte nome -> "mod_var",    #
-#        com variedade de efeito aleatório e bloco fixo;                   #
-#                                                                          #
-# (2) - Obtenta a variância total do modelo, salvando no objeto var_total; #
-#                                                                          #
-# (3) - Calcule a herdabilidade.                                           #
-#'#########################################################################
+#'###########################################################################
+# CHEGOU A HORA DE COLOCAR A MÃO NA MASSA:                                   #
+#                                                                            #
+# (1) - Construa um novo modelo misto com o seguinte nome -> "mod_var",      #
+#        com variedade de efeito aleatório e bloco fixo;                     #
+#                                                                            #
+# (2) - Obtenta a variância total do modelo, salvando no objeto "var_total"; #
+#                                                                            #
+# (3) - Calcule a herdabilidade.                                             #
+#'############################################################################
 #'COMECE A PROGRAMAR!
 
+# Conjunto de dados alfafa ---------------------------------------------------------------------------
+# Modelo de efeito fixo -----------------------------------------------------------------------
+#'##########################################################################
+# Passo 1 e 2:                                                             #
+#'##########################################################################
+#'
+alfafa <- read_excel("dados/alfafa.xlsx")
+str(alfafa)
+
+alfafa<-transform(alfafa, variedade=as.factor(variedade), 
+                  bloco=as.factor(bloco))
+str(alfafa)
 
 
+# Obtendo a tabela da ANOVA, com teste F variedades ------------------------------------------
+#'
+#'Modelo de efeito fixo
+#'
+#'prod = u + bloco + variedade+ erro
+#'
+#'
+#'Modelo de efeito fixo
+#'
+modfixo <- lm(prod ~ bloco+variedade, data=alfafa)
+anova(modfixo)
 
+#'Teste F: hipóteses
+#'H0: mu_1 = mu_2 =... mu_i = mu;
+#'Ha: pelos menos um contraste de médias difere de zero.
+#'
+#'CONCLUSÃO: Existe diferênça entre variedades de alfafa!
+#'
+#'TESTE TUKEY
+#'
+# Teste de médias -----------------------------------------------------------------------------
+#'
+#'Recurso da biblioteca agricolae
+Tukey <- HSD.test(modfixo,"variedade",alpha=0.05,console=TRUE)
 
+#Variância total e Herdabilidade
+(var_total<-0.02768+0.04765)
+h2<-0.02768/(0.02768+(0.04765/6))
+h2
 
 # Modelo hierárquico (fatores aninhados) -------------------------------------------------------
 #'
@@ -218,7 +322,7 @@ str(pesobezerros)
 #'
 #'Modelos de efeito fixo
 #'
-modfixo <- lm(peso_bezerro ~ touro/vaca, pesobezerros)
+modfixo <- lm(peso_bezerro ~ touro/vaca, data=pesobezerros)
 anova(modfixo)
 #'
 ###########################################################################
@@ -227,7 +331,7 @@ anova(modfixo)
 #'
 #'
 #'Máxima verossimilha restrita (REML)
-mod_misto <- lmer(peso_bezerro ~1 + (1|touro/vaca), pesobezerros, REML = TRUE)
+mod_misto <- lmerTest::lmer(peso_bezerro ~1 + (1|touro/vaca), pesobezerros, REML = TRUE)
 summary(mod_misto)
 #'
 #'Particionamento da variabilidade: quanto cada fator explica a variância do peso
@@ -249,7 +353,8 @@ summary(mod_misto)
 #'com três repetições cada. As medições de amônia foram realizadas quatro vezes na
 #'mesma parcela ao longo do tempo, ou seja, um estudo de medidas repetidas.
 #'
-#'
+#'OBSERVAÇÃO: Objetivo é utilizar modelo misto para levar em conta a correlação advinda 
+#'das medidas repetidas.
 #'
 volatizacao <- data.frame(
   parcela = c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6,
@@ -268,6 +373,7 @@ volatizacao <- data.frame(
           0.002, 0.072, 0.599, 0.000, 0.001, 0.086, 0.446),
   tempo = rep(1:4, 21)
 )
+View(volatizacao)
 
 #'
 #'Checando estrutura dos dados
@@ -284,7 +390,7 @@ volatizacao<-transform(volatizacao,
 str(volatizacao)
 #'
 #'Máxima verossimilha restrita (REML)
-modrep <- lmer(nh3 ~ fert * tempo + (1| parcela) , data = volatizacao, 
+modrep <- lmerTest::lmer(nh3 ~ fert * tempo + (1| parcela), data = volatizacao, 
                 REML = TRUE)
 
 summary(modrep)

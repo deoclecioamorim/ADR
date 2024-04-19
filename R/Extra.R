@@ -101,7 +101,7 @@ str(alfafa)
 #'
 #'Modelo de efeito fixo
 #'
-modfixo <- lm(prod~variedade+bloco, alfafa)
+modfixo <- lm(prod ~ bloco+variedade, data=alfafa)
 anova(modfixo)
 
 #'Teste F: hipóteses
@@ -136,7 +136,12 @@ summary(mod_var)
 (var_total<-0.02768+(0.04765/6))
 (h2<-0.02768/var_total)
 
-#'
-#'
 
+# Aula05 --------------------------------------------------------------------------------------
+
+#'O conjunto de dados está no formato .csv
+#'
+pardocas <-read.table("dados/pardocas.csv",header = T, sep = ",")
+head(pardocas)
+str(pardocas)
 
