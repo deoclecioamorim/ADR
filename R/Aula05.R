@@ -8,6 +8,7 @@
 "https://uspdigital.usp.br/apolo/apoObterCurso?cod_curso=640400020&cod_edicao=24001&numseqofeedi=1"
 
 
+#'
 #'##Conteúdo
 #'
 #'-Análises de correlação (Pearson e Spearman); 
@@ -40,7 +41,8 @@ library(openxlsx)
 #'Pacote do Bioconductor
 #https://www.bioconductor.org/
 if(!require(BiocManager)) install.packages("BiocManager", dep = TRUE)
-#BiocManager::install("ComplexHeatmap")
+BiocManager::install("ComplexHeatmap")
+library(ComplexHeatmap)
 
 # Exemplo 1: Falsa causalidade ----------------------------------------------------------------
 #'
@@ -57,6 +59,7 @@ ggplot(data = cegonhasbebes,
        mapping = aes(x = casaiscegonhas, y = habitantes)) +
   geom_point()+
   stat_smooth(method = lm, se = F)+theme_bw()
+
 
 #'Correlação de Pearson
 corrR <- round(cor(cegonhasbebes[-1], 
@@ -82,8 +85,12 @@ view(corrR)
 #'#########################################################################
 #'COMECE A PROGRAMAR!
 #'
-
-
+#'O conjunto de dados está no formato .csv
+#'
+pardocas <-read.table("dados/pardocas.csv", header = T, 
+                      sep = ",")
+head(pardocas)
+str(pardocas)
 
 # Análise de correlação -----------------------------------------------------------------------
 pardocas_numeric <- pardocas[,2:6]
@@ -110,8 +117,8 @@ corrSp <- Hmisc::rcorr(as.matrix(pardocas_numeric),
 view(corrSp)
 
 
-#Computando os p-valores da correlação de Spearman
-p.mat <- cor_pmat(pardocas_numeric)
+#Computando os p-valores da correlação de Pearson
+p.mat <- ggcorrplot::cor_pmat(pardocas_numeric)
 p.mat
 
 #Gráfico das correlações
@@ -171,6 +178,7 @@ factoextra::fviz_dend(dend_qui, cex=0.5)
 #'
 #'Combinando as informações dos dendogramas e mapa de 
 #'calor.
+library(ComplexHeatmap)
 Heatmap(heatmap_padronizado, name = "Atividade",
         row_title = "Baixas doses/Regimes hídricos",
         column_title = "Compostos bioquímicos",
@@ -227,46 +235,54 @@ pardocas_numeric <- pardocas[,2:6]
 str(pardocas_numeric) #verificando se a seleção funcinou
 
 #Matriz de covariâncias
-matcov <- cov(pardocas_numeric)
+matcov <- cor(pardocas_numeric)
 matcov
 
+
 #' # PCA na unha -----------------------------------------------------
-#' pardocas_pca <- stats::prcomp(pardocas_numeric, scale=T)
-#' summary(pardocas_pca)
-#' #'
-#' #'Decomposição do summary da prcomp()
-#' #'Os autovalores são as variâncias dos componentes principais
-#' (autovalores_pardocas <- pardocas_pca$sdev^2)     # autovalores sdev^2
-#' names(autovalores_pardocas) <- paste("PC", 1:5,sep="")
-#' autovalores_pardocas
-#' #'
-#' #'Variância total é soma dos autovalores
-#' #'
-#' (somaautovalores <- sum(autovalores_pardocas))
-#' #'
-#' #'Proporção da variância
-#' (propvar <- (autovalores_pardocas/somaautovalores)*100)
-#' #'
-#' #'Proporção da variância acumulada 
-#' (cumvar_pardocas <- cumsum(propvar))
-#' #'
-#' #'Obtendo os autovetores
-#' #'
-#' (autovetores<-pardocas_pca$rotation)
-#' #OU
-#' print(pardocas_pca)
+pardocas_pca <- stats::prcomp(pardocas_numeric, scale=T)
+summary(pardocas_pca)
+#'
+#'Decomposição do summary da prcomp()
+#'Os autovalores são as variâncias dos componentes principais
+(autovalores_pardocas <- pardocas_pca$sdev^2)     # autovalores sdev^2
+names(autovalores_pardocas) <- paste("PC", 1:5,sep="")
+autovalores_pardocas
+#'
+#'Variância total é soma dos autovalores
+#'
+(somaautovalores <- sum(autovalores_pardocas))
+#'
+#'Proporção da variância
+(propvar <- (autovalores_pardocas/somaautovalores)*100)
+#'
+#'Proporção da variância acumulada
+(cumvar_pardocas <- cumsum(propvar))
+#'
+#'Obtendo os autovetores
+#'
+(autovetores<-pardocas_pca$rotation)
+#OU
+print(pardocas_pca)
+pardocas_pca$
 
 # PCA com a matriz de variâncias e correlações:com a biblioteca FactoMinerR -----------------------
-res.pca <- FactoMineR::PCA(pardocas_numeric, scale.unit = T, graph = FALSE)
+res.pca <- FactoMineR::PCA(pardocas_numeric, 
+                           scale.unit = T, graph = FALSE)
+#  scale.unit = T -> trabalhando com correlação
+#  scale.unit = F -> trabalhando com covariância
 print(res.pca)
-res.pca$eig #Autovalores
-res.pca$svd$V #Autovetores
+res.pca$eig #Autovalores onde eu vejo a contribuição de cada eixo para explicação da variância
+res.pca$svd #Autovetores onde eu vejo a importância das minhas variàveis para cada eixo
 #'
+
 #'Construindo os componentes principais
 #'
 #'Indice de tamanho dos pardocas
 #PC1 = 0.4517989X1 + 0.4616809X2 + 0.4505416X3 + 0.4707389X4 + 0.3976754X5
 #PC2 = 0.05072137X1 - 0.29956355X2 -0.32457242X3 -0.18468403X4 + 0.87648935X5 
+#'
+#'
 ##Scree plot
 factoextra::fviz_eig(res.pca, addlabels = T)
 
@@ -309,7 +325,7 @@ str(plfa)
 matcor_plfa<-cor(plfa[3:9], method = "pearson")
 matcor_plfa
 
-#Computando os p-valores da correlação de Spearman
+#Computando os p-valores da correlação de Pearson
 p.mat_plfa <- ggcorrplot::cor_pmat(matcor_plfa)
 p.mat_plfa
 
@@ -356,5 +372,28 @@ factoextra::fviz_pca_biplot(pca_plfa,
   
 
 
+#'##################################################################################################
+#'                            AGRADECIMENTOS                                                       #
+#'                                                                                                 #       
+#'(1) - Direção do CENA/USP;                                                                       #
+#'(2) - Gilson Rocha Costa;                                                                        #
+#'(3) - Marcos Rogerio Lopes;                                                                      #
+#'(4) - Alzira Ferraz Adão;                                                                        # 
+#'(5) - Roseli da Silva Lima;                                                                      #
+#'(6) - Seção Técnica de Informática;                                                              #
+#'(7) - Renata Fini;                                                                               #
+#'(8) - Participantes do Curso.                                                                    #
+#'##################################################################################################
 
 
+
+#'##################################################################################################
+#'                                                                                                 #
+#'                          AVALIAÇÃO DO CURSO                                                     #
+#'                                                                                                 #
+#'Nos próximos dias vocês reberão um e-mail do sistema Apolo convidando para avaliar este curso.   #
+#'Pedimos por gentileza que realizem a avaliação, pois é necessário para a manutenção/melhorias    #
+#'do curso.                                                                                        #
+#'#################################################################################################
+#'                         
+                       
